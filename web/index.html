@@ -237,10 +237,12 @@
   .acc .bar { height: 6px; border-radius: 3px; background: var(--panel-2); overflow: hidden; margin-top: 2px; }
   .acc .bar i { display: block; height: 100%; background: var(--green); border-radius: 3px; }
   .acc .bar i.mid { background: #e8b339; } .acc .bar i.high { background: var(--red); }
+  #boot { padding: 10px 16px; background: #3a2a10; color: #f3cd57; font-size: 13px; word-break: break-word; }
 </style>
 <script src="/book.js"></script>
 </head>
 <body>
+<div id="boot" hidden></div>
 <header>
   <h1>Lighter RH · <span>Premium</span> Book</h1>
   <div class="ctl">Тикер <select id="market"></select><button class="star" id="fav-btn" title="в избранное">☆</button></div>
@@ -807,11 +809,17 @@ async function init() {
   await loadRegistry();
   pollMy();
   // только RWA и pre-IPO, которые есть и на RH, и на Core (крипту и одиночные сервер отсекает)
-  for (let i = 0; i < 20 && !st.markets.length; i++) {
+  // ждём, пока сервер загрузит рынки с Lighter, и показываем, что мешает (сеть, сертификаты, лимит запросов)
+  for (let i = 0; !st.markets.length; i++) {
     try { st.markets = await (await fetch("/markets")).json(); } catch {}
-    if (!st.markets.length) await new Promise(r => setTimeout(r, 1500));
+    if (st.markets.length) break;
+    let why = "";
+    try { const s = await (await fetch("/status")).json(); why = s.error || ""; } catch { why = "сервер не отвечает — запущено ли окно Stakan?"; }
+    $("boot").hidden = i < 2 && !why;
+    $("boot").textContent = "Загружаю список рынков с Lighter… " + (why ? `Причина задержки: ${why}` : "");
+    await new Promise(r => setTimeout(r, 2000));
   }
-  if (!st.markets.length) throw new Error("сервер ещё не загрузил список рынков — обновите страницу");
+  $("boot").hidden = true;
   st.favs = st.favs.filter(s => st.markets.some(m => m.symbol === s));
   buildMarketSelect();
   const saved = (qp.get("market") || store.get("market", "COIN")).toUpperCase();

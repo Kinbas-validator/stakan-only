@@ -12,6 +12,7 @@
 ws_budget() — общий счётчик для всех соединений сервера с одной площадкой.
 """
 import json
+import ssl
 import threading
 import time
 import urllib.error
@@ -22,6 +23,26 @@ HOSTS = {"rh": "api.rh.lighter.xyz", "core": "mainnet.zklighter.elliot.ai"}
 BUDGET = 48          # REST-запросов в минуту на площадку (из ~60 разрешённых)
 LOW_SHARE = 0.6      # фоновые запросы — пока окно заполнено меньше чем на 60%
 WS_BUDGET = 150      # отправленных WS-сообщений в минуту на площадку (из 200)
+
+
+def ssl_context():
+    """Сертификаты для HTTPS и WSS: системные + набор certifi.
+
+    На Windows Python берёт корневые сертификаты из хранилища Windows, а оно пополняется лениво
+    (сертификат появляется, когда его впервые запросит браузер) — без certifi бывает
+    CERTIFICATE_VERIFY_FAILED. Системное хранилище тоже нужно: антивирус, проверяющий HTTPS,
+    кладёт туда свой корневой сертификат.
+    """
+    ctx = ssl.create_default_context()
+    try:
+        import certifi
+        ctx.load_verify_locations(cafile=certifi.where())
+    except ImportError:
+        pass
+    return ctx
+
+
+SSL = ssl_context()
 
 
 class Limiter:
@@ -89,7 +110,7 @@ def get(venue, path, low=False, timeout=None, tries=4):
         if not lim.acquire(low=low, timeout=timeout):
             raise ApiError("очередь запросов занята")
         try:
-            with urllib.request.urlopen(url, timeout=30) as r:
+            with urllib.request.urlopen(url, timeout=30, context=SSL) as r:
                 return json.load(r)
         except urllib.error.HTTPError as e:
             last = e

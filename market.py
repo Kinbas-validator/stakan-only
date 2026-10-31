@@ -197,7 +197,7 @@ class Market:
         delay = 2
         while True:
             try:
-                async with websockets.connect(api.ws_url(v), ping_interval=20, ping_timeout=20,
+                async with websockets.connect(api.ws_url(v), ssl=api.SSL, ping_interval=20, ping_timeout=20,
                                               max_size=None, open_timeout=15) as ws:
                     for b in self.books[v].values():
                         b.valid = False
@@ -258,7 +258,7 @@ class Market:
         delay = 2
         while True:
             try:
-                async with websockets.connect(api.ws_url("rh"), ping_interval=20, ping_timeout=20,
+                async with websockets.connect(api.ws_url("rh"), ssl=api.SSL, ping_interval=20, ping_timeout=20,
                                               max_size=None, open_timeout=15) as ws:
                     self.restart["trades"] = False
                     with self.lock:
