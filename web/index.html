@@ -72,14 +72,15 @@
   .btn:hover { background: #2d3d6e; }
   .btn:disabled { opacity: .6; cursor: wait; }
 
-  /* рабочее место: стакан (a), карточки premium и сделки (c), хеджи (b), мой аккаунт (d) */
-  main { display: grid; gap: 14px; padding: 14px 16px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "a" "c" "b" "d"; }
-  .ca { grid-area: a; } .cb { grid-area: b; } .cc { grid-area: c; } .cd { grid-area: d; }
-  @media (min-width: 1100px) {   /* стакан и карточки premium рядом, хеджи и аккаунт — под ними */
-    main { grid-template-columns: minmax(520px, 1.5fr) minmax(320px, 1fr); grid-template-areas: "a c" "b b" "d d"; }
+  /* сверху счета и хеджи на всю ширину; рабочее место: стакан (a), карточки premium и сделки (c), мой аккаунт (d) */
+  .hedges-row { padding: 14px 16px 0; }
+  main { display: grid; gap: 14px; padding: 14px 16px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "a" "c" "d"; }
+  .ca { grid-area: a; } .cc { grid-area: c; } .cd { grid-area: d; }
+  @media (min-width: 1100px) {   /* стакан и карточки premium рядом, аккаунт — под ними */
+    main { grid-template-columns: minmax(520px, 1.5fr) minmax(320px, 1fr); grid-template-areas: "a c" "d d"; }
   }
   @media (min-width: 1700px) {   /* широкий экран: мой аккаунт — третьей колонкой */
-    main { grid-template-columns: minmax(560px, 1.15fr) minmax(340px, 0.75fr) minmax(560px, 1.1fr); grid-template-areas: "a c d" "b b d"; grid-template-rows: auto 1fr; }
+    main { grid-template-columns: minmax(560px, 1.15fr) minmax(340px, 0.75fr) minmax(560px, 1.1fr); grid-template-areas: "a c d"; }
     .my-wrap { max-height: 1100px; }
   }
   .col { display: grid; gap: 14px; align-content: start; min-width: 0; }
@@ -255,6 +256,14 @@
 
 <div class="accts" id="acct-strip"></div>
 
+<div class="hedges-row">
+  <div class="panel" id="hedges-panel">
+    <h2><span>Мои хеджи — по кошельку, без ручного ввода</span><span class="muted num" style="font-weight:400" id="h-status"></span></h2>
+    <div class="tbl"><table class="grid num" id="hedges"></table></div>
+    <div class="chips num" id="accts"></div>
+  </div>
+</div>
+
 <main>
   <div class="col ca">
     <section class="panel">
@@ -320,14 +329,6 @@
     <div class="panel">
       <h2><span>Последние сделки рынка</span><span style="font-weight:400">мейкер / тейкер</span></h2>
       <div class="trades"><table><tbody id="trades"></tbody></table></div>
-    </div>
-  </div>
-
-  <div class="col cb">
-    <div class="panel" id="hedges-panel">
-      <h2><span>Мои хеджи — по кошельку, без ручного ввода</span><span class="muted num" style="font-weight:400" id="h-status"></span></h2>
-      <div class="tbl"><table class="grid num" id="hedges"></table></div>
-      <div class="chips num" id="accts"></div>
     </div>
   </div>
 
