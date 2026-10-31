@@ -17,6 +17,7 @@ import queue
 import sys
 import threading
 import time
+import urllib.request
 import webbrowser
 from collections import defaultdict
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -175,6 +176,17 @@ def make_handler(app):
 
 class Server(ThreadingHTTPServer):
     daemon_threads = True
+    # на Windows SO_REUSEADDR даёт занять порт, который уже слушает другая программа
+    allow_reuse_address = sys.platform != "win32"
+
+
+def already_running(port):
+    """Стакан уже запущен на этом порту (повторный двойной щелчок по Start.bat)?"""
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/wallet", timeout=2) as r:
+            return "wallet" in json.load(r)
+    except Exception:
+        return False
 
 
 def main(argv=None):
@@ -184,16 +196,27 @@ def main(argv=None):
     ap.add_argument("--no-browser", action="store_true")
     ap.add_argument("--wallet", help="адрес кошелька 0x… (можно задать и на странице)")
     a = ap.parse_args(argv)
+    url = f"http://127.0.0.1:{a.port}"
+    if not a.wallet and already_running(a.port):
+        print(f"Стакан уже запущен: {url} — открываю страницу.", flush=True)
+        if not a.no_browser:
+            webbrowser.open(url)
+        return 0
+    try:
+        srv = Server((a.host, a.port), None)
+    except OSError as e:
+        print(f"Порт {a.port} занят другой программой ({e}). Запустите с другим портом: --port 8766", file=sys.stderr)
+        return 2
     app = App(DATA)
     if a.wallet:
         try:
             app.tracker.set_wallet(a.wallet)
         except account.WalletError as e:
             print(f"Кошелёк не принят: {e}", file=sys.stderr)
+            srv.server_close()
             return 2
-    srv = Server((a.host, a.port), make_handler(app))
+    srv.RequestHandlerClass = make_handler(app)
     app.start()
-    url = f"http://127.0.0.1:{a.port}"
     w = app.tracker.info()
     who = f"кошелёк {w['wallet']}, аккаунт RH {w['account']}" if w["wallet"] else "кошелёк не задан — укажите его на странице"
     print(f"Стакан запущен: {url}  ({who}; остановить — Ctrl+C)", flush=True)

@@ -126,5 +126,39 @@ class ServerTest(unittest.TestCase):
         r.close()
 
 
+class MainTest(unittest.TestCase):
+    """Повторный запуск (двойной щелчок по Start.bat) и занятый порт."""
+
+    def test_second_launch_opens_running_page(self):
+        tmp = tempfile.TemporaryDirectory()
+        app = server.App(tmp.name)
+        srv = server.Server(("127.0.0.1", 0), server.make_handler(app))
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        port = srv.server_address[1]
+        try:
+            with mock.patch("webbrowser.open") as wb, mock.patch.object(server, "App") as new_app:
+                self.assertEqual(server.main(["--port", str(port)]), 0)
+            wb.assert_called_once_with(f"http://127.0.0.1:{port}")
+            new_app.assert_not_called()   # второй сервер не создаётся
+        finally:
+            srv.shutdown()
+            srv.server_close()
+            tmp.cleanup()
+
+    def test_port_busy_with_other_program(self):
+        import socket
+        busy = socket.socket()
+        busy.bind(("127.0.0.1", 0))
+        busy.listen()
+        port = busy.getsockname()[1]
+        try:
+            with mock.patch.object(server, "already_running", return_value=False), \
+                    mock.patch.object(server, "App") as new_app, mock.patch("sys.stderr"):
+                self.assertEqual(server.main(["--port", str(port), "--no-browser"]), 2)
+            new_app.assert_not_called()
+        finally:
+            busy.close()
+
+
 if __name__ == "__main__":
     unittest.main()
