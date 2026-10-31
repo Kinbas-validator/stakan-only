@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Premium Book · Lighter RH</title>
+<!-- иконка вкладки: мини-стакан (продажи / спред / покупки) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%227%22%20fill%3D%22%230b0e13%22/%3E%3Crect%20x%3D%225%22%20y%3D%225%22%20width%3D%2222%22%20height%3D%224%22%20rx%3D%221.5%22%20fill%3D%22%23f0616d%22/%3E%3Crect%20x%3D%2211%22%20y%3D%2210%22%20width%3D%2216%22%20height%3D%223.5%22%20rx%3D%221.5%22%20fill%3D%22%23f0616d%22%20opacity%3D%22.75%22/%3E%3Crect%20x%3D%223%22%20y%3D%2215%22%20width%3D%2226%22%20height%3D%222.5%22%20rx%3D%221%22%20fill%3D%22%234f6bd8%22/%3E%3Crect%20x%3D%225%22%20y%3D%2219.5%22%20width%3D%2222%22%20height%3D%223.5%22%20rx%3D%221.5%22%20fill%3D%22%232ebd85%22/%3E%3Crect%20x%3D%229%22%20y%3D%2224%22%20width%3D%2218%22%20height%3D%224%22%20rx%3D%221.5%22%20fill%3D%22%232ebd85%22%20opacity%3D%22.75%22/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0b0e13;
+    --panel: #12161d;
+    --panel-2: #171c25;
+    --line: #232a35;
+    --text: #e8ebf0;
+    --muted: #8590a2;
+    --dim: #5b6576;
+    --red: #f0616d;
+    --green: #2ebd85;
+    --prem-bg: rgba(46, 189, 133, 0.17);
+    --prem-text: #5ff0b2;
+    --plus-bg: rgba(240, 185, 11, 0.13);
+    --plus-text: #f3cd57;
+    --mine-bg: rgba(167, 139, 250, 0.22);
+    --mine-text: #cdbdff;
+    --mine-edge: #a78bfa;
+    --unk-text: #687284;
+    --glow: rgba(46, 189, 133, 0.55);
+    --spread-bg: #1a2546;
+    --spread-edge: #4f6bd8;
+    --spread-text: #cfdaff;
+    --row-h: 23px;
+    --mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  header { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center;
+    padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel);
+    position: sticky; top: 0; z-index: 5; }
+  header h1 { font-size: 15px; margin: 0 8px 0 0; font-weight: 650; letter-spacing: .2px; }
+  header h1 span { color: var(--prem-text); }
+  .ctl { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12.5px; }
+  select, input { background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 5px 8px; font: inherit; font-size: 13px; }
+  input[type=number] { width: 92px; }
+  select:focus, input:focus { outline: 1px solid var(--green); }
+  .status { margin-left: auto; display: flex; align-items: center; cursor: help; }
+  .book-ctl .ctl { gap: 5px; }
+  .book-ctl input[type=number] { width: 74px; padding: 3px 6px; }
+  .book-ctl select { padding: 3px 6px; }
+  #last-panel .last-order { border-bottom: 0; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--red);
+    margin-right: 5px; vertical-align: 0; }
+  .dot.ok { background: var(--green); }
+  .dot.warn { background: #e8b339; }
+  label.chk { display: flex; gap: 5px; align-items: center; cursor: pointer; }
+
+  /* кошелёк */
+  form.wallet { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12.5px; min-width: 0; }
+  form.wallet input { width: 25em; max-width: 52vw; font-family: var(--mono); font-size: 12px; }
+  form.wallet .who { color: var(--text); white-space: nowrap; }
+  form.wallet .err { color: var(--red); }
+  @media (max-width: 640px) {
+    form.wallet { flex-wrap: wrap; width: 100%; }
+    form.wallet input { flex: 1 1 200px; width: auto; max-width: none; }
+  }
+  .btn { background: #233056; color: #fff; border: 1px solid var(--spread-edge); border-radius: 6px; padding: 5px 12px;
+    font: inherit; font-size: 12.5px; cursor: pointer; }
+  .btn:hover { background: #2d3d6e; }
+  .btn:disabled { opacity: .6; cursor: wait; }
+
+  /* рабочее место: стакан (a), карточки premium и сделки (c), хеджи (b), мой аккаунт (d) */
+  main { display: grid; gap: 14px; padding: 14px 16px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "a" "c" "b" "d"; }
+  .ca { grid-area: a; } .cb { grid-area: b; } .cc { grid-area: c; } .cd { grid-area: d; }
+  @media (min-width: 1100px) {   /* стакан и карточки premium рядом, хеджи и аккаунт — под ними */
+    main { grid-template-columns: minmax(520px, 1.5fr) minmax(320px, 1fr); grid-template-areas: "a c" "b b" "d d"; }
+  }
+  @media (min-width: 1700px) {   /* широкий экран: мой аккаунт — третьей колонкой */
+    main { grid-template-columns: minmax(560px, 1.15fr) minmax(340px, 0.75fr) minmax(560px, 1.1fr); grid-template-areas: "a c d" "b b d"; grid-template-rows: auto 1fr; }
+    .my-wrap { max-height: 1100px; }
+  }
+  .col { display: grid; gap: 14px; align-content: start; min-width: 0; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .panel h2 { margin: 0; padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--muted);
+    border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .panel h2.wrap { flex-wrap: wrap; }
+  .ctls { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  /* ---------- стакан ---------- */
+  table.book { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .book th { color: var(--muted); font-weight: 500; font-size: 11.5px; text-transform: uppercase; letter-spacing: .4px;
+    padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--line); background: var(--panel); }
+  .book td { height: var(--row-h); padding: 0 10px; text-align: right; font-size: 13px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; }
+  .book th.l, .book td.l { text-align: left; }
+  .book td.q, .book th.q { color: var(--dim); font-size: 11px; text-align: center; }
+  tr.r { color: #fff; }
+  tr.r.premium { background: var(--prem-bg); color: var(--prem-text); }
+  tr.r.plus { background: var(--plus-bg); color: var(--plus-text); }
+  tr.r.mine { background: var(--mine-bg); color: var(--mine-text); }
+  tr.r.mine td:first-child { box-shadow: inset 3px 0 0 var(--mine-edge); }
+  tr.r.unknown { color: var(--unk-text); }
+  tr.r.blank td { color: transparent; }
+  tr.r.lvl-start td { background-image: linear-gradient(rgba(255,255,255,.07), rgba(255,255,255,.07));
+    background-size: 100% 1px; background-repeat: no-repeat; }
+  tr.r td.price { font-weight: 600; }
+  tr.r.ask td.price::before, tr.r.bid td.price::before { content: ""; display: inline-block; width: 3px; height: 12px;
+    margin-right: 8px; vertical-align: -1px; border-radius: 2px; }
+  tr.r.ask td.price::before { background: var(--red); }
+  tr.r.bid td.price::before { background: var(--green); }
+  tr.r.repeat td.price { opacity: .45; }
+  tr.r.fill td:first-child { box-shadow: inset 3px 0 0 #fff; }
+  tr.r.premium.fill td:first-child { box-shadow: inset 3px 0 0 var(--prem-text); }
+  .tag { font-size: 11.5px; font-weight: 700; letter-spacing: .5px; }
+
+  /* заголовок стороны — он же баннер сигнала (высота не меняется, стакан не прыгает) */
+  .sidehead { display: flex; justify-content: space-between; align-items: center; gap: 10px; height: 34px; padding: 0 14px;
+    font-size: 12px; color: var(--muted); background: var(--panel-2); transition: background .3s, color .3s; }
+  .sidehead > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sidehead .sig { display: none; font-weight: 700; font-size: 13px; letter-spacing: .3px; }
+  .side.hot .sidehead { background: linear-gradient(90deg, rgba(46,189,133,.42), rgba(46,189,133,.1)); color: #eafff5; }
+  .side.hot .sidehead .sig { display: inline; }
+  .side.hot .sidehead .plain { display: none; }
+  .side { position: relative; }
+  .side.hot { box-shadow: inset 0 0 0 2px var(--glow), inset 0 0 28px rgba(46,189,133,.18); animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: inset 0 0 0 2px rgba(46,189,133,.25), inset 0 0 10px rgba(46,189,133,.06); } }
+
+  /* разделитель спреда: фиксированное место между двумя одинаковыми половинами */
+  .spread { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; height: 38px; padding: 0 14px;
+    background: var(--spread-bg); color: var(--spread-text); border-top: 2px solid var(--spread-edge);
+    border-bottom: 2px solid var(--spread-edge); font-size: 13px; }
+  .spread b { font-size: 14px; color: #fff; }
+  .spread .best { text-align: center; color: var(--spread-text); }
+  .spread .best .a { color: var(--red); } .spread .best .b { color: var(--green); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11.5px; color: var(--muted); padding: 9px 14px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+  /* ---------- карточки ---------- */
+  .opp { padding: 12px 14px; display: grid; gap: 8px; }
+  .opp .title { display: flex; justify-content: space-between; align-items: baseline; }
+  .opp .big { font-size: 30px; font-weight: 700; }
+  .meter { height: 8px; border-radius: 4px; background: var(--panel-2); overflow: hidden; position: relative; }
+  .meter i { position: absolute; inset: 0 auto 0 0; background: var(--green); border-radius: 4px; transition: width .25s; }
+  .meter u { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #fff; opacity: .6; }
+  .kv { display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; font-size: 12.5px; color: var(--muted); }
+  .kv span:nth-child(even) { color: var(--text); text-align: right; }
+  .panel.opp-card.hot { border-color: var(--glow); box-shadow: 0 0 0 1px var(--glow), 0 0 26px rgba(46,189,133,.25); }
+  .panel.opp-card.hot .big { color: var(--prem-text); }
+  .verdict { font-size: 12.5px; padding: 6px 9px; border-radius: 6px; background: var(--panel-2); color: var(--muted); }
+  .hot .verdict { background: rgba(46,189,133,.18); color: #dffbee; }
+  .flow { padding: 12px 14px; display: grid; gap: 10px; }
+  .fstat { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: baseline; }
+  .fstat b { font-size: 20px; }
+  .fstat small { grid-column: 1 / -1; color: var(--muted); font-size: 11.5px; }
+  .trades { max-height: 300px; overflow-y: auto; }
+  .trades table, table.my { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .trades td { padding: 3px 10px; white-space: nowrap; text-align: right; }
+  .trades td.l { text-align: left; }
+  .pill { display: inline-block; padding: 0 5px; border-radius: 4px; font-size: 10.5px; font-weight: 700; }
+  .pill.premium { background: var(--prem-bg); color: var(--prem-text); }
+  .pill.standard { background: rgba(255,255,255,.07); color: #fff; }
+  .pill.plus { background: var(--plus-bg); color: var(--plus-text); }
+  .pill.unknown { color: var(--unk-text); }
+  .pill.mine { background: var(--mine-bg); color: var(--mine-text); }
+  .buy { color: var(--green); } .sell { color: var(--red); }
+
+  /* ---------- мой аккаунт ---------- */
+  .acct-top { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
+  @media (max-width: 700px) { .acct-top { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kpi { padding: 10px 14px; border-right: 1px solid var(--line); }
+  .kpi:last-child { border-right: 0; }
+  .kpi small { display: block; color: var(--muted); font-size: 11.5px; margin-bottom: 2px; }
+  .kpi b { font-size: 20px; }
+  .kpi.good b { color: var(--prem-text); }
+  .last-order { padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; align-items: center;
+    border-bottom: 1px solid var(--line); background: var(--panel-2); }
+  .last-order .verdict-big { grid-row: span 2; font-size: 18px; font-weight: 800; padding: 8px 12px; border-radius: 8px;
+    background: rgba(255,255,255,.06); color: #fff; min-width: 190px; text-align: center; }
+  .last-order.good .verdict-big { background: var(--prem-bg); color: var(--prem-text); box-shadow: 0 0 0 1px var(--glow); }
+  .last-order.part .verdict-big { background: var(--plus-bg); color: var(--plus-text); }
+  .last-order .meta { color: var(--muted); font-size: 12.5px; }
+  .my-wrap { max-height: 360px; overflow: auto; }
+  table.my th { position: sticky; top: 0; background: var(--panel); color: var(--muted); font-weight: 500; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .4px; padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--line); }
+  table.my td { padding: 4px 10px; text-align: right; white-space: nowrap; }
+  table.my .l { text-align: left; }
+  table.my tr.premium td { background: var(--prem-bg); color: var(--prem-text); }
+  table.my tr.unknown td { color: var(--unk-text); }
+  table.my tr.new td { animation: flash 2.5s ease-out; }
+  @keyframes flash { 0% { background: rgba(167,139,250,.55); } 100% { } }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 9px 14px; border-bottom: 1px solid var(--line); font-size: 12px; }
+  .chips .muted { align-self: center; margin-right: 4px; }
+  .chip { padding: 3px 8px; border-radius: 6px; background: var(--panel-2); border: 1px solid var(--line); }
+  .chip.good { border-color: var(--glow); color: var(--prem-text); }
+  .muted { color: var(--muted); }
+  .warn { color: #e8b339; }
+  .pos { color: var(--green); } .neg { color: var(--red); }
+  .empty { padding: 18px 14px; color: var(--muted); }
+  .panel, .accts { scroll-margin-top: 110px; }
+
+  /* ---------- хеджи ---------- */
+  .tbl { overflow-x: auto; }
+  table.grid { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.grid th { background: var(--panel); color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .3px; padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.grid td { padding: 5px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid rgba(255,255,255,.03); }
+  table.grid .l { text-align: left; }
+  table.grid tr.click { cursor: pointer; } table.grid tr.click:hover td { background: rgba(255,255,255,.035); }
+  table.grid tr.sel td { background: rgba(79,107,216,.16); }
+
+  /* ---------- избранное ---------- */
+  .star { background: none; border: 0; color: var(--dim); font-size: 18px; line-height: 1; cursor: pointer; padding: 0 2px; }
+  .star.on { color: #f3cd57; }
+  .star:hover { color: #f3cd57; }
+  .favs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .favs button { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+    padding: 3px 9px; font: inherit; font-size: 12.5px; cursor: pointer; }
+  .favs button.on { border-color: #f3cd57; color: #f3cd57; }
+  .favs .hint { color: var(--dim); font-size: 12px; align-self: center; }
+
+  /* ---------- счета ---------- */
+  .accts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding: 14px 16px 0; }
+  @media (max-width: 1000px) { .accts { grid-template-columns: 1fr; } }
+  .accts .note { grid-column: 1 / -1; background: var(--panel); border: 1px dashed var(--line); border-radius: 10px;
+    padding: 14px 16px; color: var(--muted); }
+  .acc { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; display: grid; gap: 4px; }
+  .acc small { color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: .6px; }
+  .acc .top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .acc .top b { font-size: 24px; }
+  .acc .top .pv { font-size: 22px; font-weight: 700; }
+  .acc .line { font-size: 12.5px; color: var(--muted); }
+  .acc .line b { font-weight: 600; }
+  .acc .bar { height: 6px; border-radius: 3px; background: var(--panel-2); overflow: hidden; margin-top: 2px; }
+  .acc .bar i { display: block; height: 100%; background: var(--green); border-radius: 3px; }
+  .acc .bar i.mid { background: #e8b339; } .acc .bar i.high { background: var(--red); }
+</style>
+<script src="/book.js"></script>
+</head>
+<body>
+<header>
+  <h1>Lighter RH · <span>Premium</span> Book</h1>
+  <div class="ctl">Тикер <select id="market"></select><button class="star" id="fav-btn" title="в избранное">☆</button></div>
+  <div class="favs" id="favs"></div>
+  <form class="wallet" id="wallet-form" autocomplete="off">
+    <span>Кошелёк</span>
+    <input id="wallet" placeholder="0x… адрес кошелька" spellcheck="false">
+    <button class="btn" id="wallet-btn" type="submit">Применить</button>
+    <span class="num" id="wallet-msg"></span>
+  </form>
+  <span class="status" title=""><i class="dot" id="d-all"></i></span>
+</header>
+
+<div class="accts" id="acct-strip"></div>
+
+<main>
+  <div class="col ca">
+    <section class="panel">
+      <h2 class="wrap"><span id="book-title">Стакан</span>
+        <span class="ctls book-ctl" style="font-weight:400">
+          <label class="ctl">строк <select id="rows"><option>5</option><option>10</option><option>15</option><option selected>20</option><option>25</option><option>30</option></select></label>
+          <label class="ctl">объём $ <input id="size" type="number" min="10" step="100" value="5000"></label>
+          <label class="ctl">порог premium % <input id="thr" type="number" min="1" max="100" step="5" value="80"></label>
+          <label class="ctl chk" title="звук при сигнале и при исполнении вашей заявки"><input id="sound" type="checkbox"> звук</label>
+        </span></h2>
+      <table class="book"><colgroup><col style="width:44px"><col style="width:16%"><col style="width:16%"><col style="width:16%"><col style="width:13%"><col style="width:12%"><col></colgroup>
+        <thead><tr><th class="q">№</th><th class="l">Цена</th><th class="sz">Размер</th><th class="tot">Всего</th><th>Объём $</th><th class="l">Тип</th><th class="l">Аккаунт</th></tr></thead></table>
+      <div class="side" id="asks-side">
+        <div class="sidehead"><span class="plain">ASKS · продажи — бьёшь покупкой (лонг)</span>
+          <span class="sig">▲ ЛОНГ МАРКЕТОМ — продавцы premium · <span class="num" id="ban-long"></span></span>
+          <span id="sum-asks"></span></div>
+        <table class="book"><colgroup><col style="width:44px"><col style="width:16%"><col style="width:16%"><col style="width:16%"><col style="width:13%"><col style="width:12%"><col></colgroup><tbody id="asks"></tbody></table>
+      </div>
+      <div class="spread num">
+        <span>СПРЕД <b id="sp-val">—</b> <span id="sp-pct"></span></span>
+        <span class="best">продажа <span class="a" id="sp-ask">—</span> · середина <b id="sp-mid">—</b> · покупка <span class="b" id="sp-bid">—</span></span>
+        <span id="sp-sym"></span>
+      </div>
+      <div class="side" id="bids-side">
+        <table class="book"><colgroup><col style="width:44px"><col style="width:16%"><col style="width:16%"><col style="width:16%"><col style="width:13%"><col style="width:12%"><col></colgroup><tbody id="bids"></tbody></table>
+        <div class="sidehead"><span class="plain">BIDS · покупки — бьёшь продажей (шорт)</span>
+          <span class="sig">▼ ШОРТ МАРКЕТОМ — покупатели premium · <span class="num" id="ban-short"></span></span>
+          <span id="sum-bids"></span></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--prem-text)"></i>premium</span>
+        <span><i style="background:#fff"></i>standard</span>
+        <span><i style="background:var(--mine-edge)"></i>мой ордер</span>
+        <span><i style="background:var(--plus-text)"></i>plus</span>
+        <span><i style="background:var(--unk-text)"></i>владелец не определён</span>
+        <span>белая метка слева — ордера, которые заберёт рыночная заявка на заданный объём</span>
+      </div>
+    </section>
+  </div>
+
+  <div class="col cc">
+    <div class="panel" id="last-panel">
+      <h2><span>Моя последняя заявка на RH</span><span class="muted num" style="font-weight:400" id="lp-week"></span></h2>
+      <div class="last-order" id="last-order">
+        <div class="verdict-big" id="lo-verdict">Сделок пока нет</div>
+        <div class="num" id="lo-main"></div>
+        <div class="meta num" id="lo-meta">Последняя заявка: как только она исполнится, здесь появится результат</div>
+      </div>
+    </div>
+    <div class="panel opp-card" id="card-short">
+      <h2><span>▼ Шорт маркетом (продажа в BIDS)</span><span class="num" id="short-badge"></span></h2>
+      <div class="opp" id="short-body"></div>
+    </div>
+    <div class="panel opp-card" id="card-long">
+      <h2><span>▲ Лонг маркетом (покупка из ASKS)</span><span class="num" id="long-badge"></span></h2>
+      <div class="opp" id="long-body"></div>
+    </div>
+    <div class="panel">
+      <h2><span>Поток сделок</span>
+        <select id="win"><option value="5">5 мин</option><option value="15" selected>15 мин</option><option value="60">60 мин</option></select></h2>
+      <div class="flow" id="flow"></div>
+    </div>
+    <div class="panel">
+      <h2><span>Последние сделки рынка</span><span style="font-weight:400">мейкер / тейкер</span></h2>
+      <div class="trades"><table><tbody id="trades"></tbody></table></div>
+    </div>
+  </div>
+
+  <div class="col cb">
+    <div class="panel" id="hedges-panel">
+      <h2><span>Мои хеджи — по кошельку, без ручного ввода</span><span class="muted num" style="font-weight:400" id="h-status"></span></h2>
+      <div class="tbl"><table class="grid num" id="hedges"></table></div>
+      <div class="chips num" id="accts"></div>
+    </div>
+  </div>
+
+  <div class="col cd">
+    <section class="panel" id="acct">
+      <h2><span>Мой аккаунт <span class="num" id="acct-id"></span></span><span class="muted num" style="font-weight:400" id="acct-status"></span></h2>
+      <div class="acct-top">
+        <div class="kpi"><small>Неделя очков (время Турции)</small><b class="num" id="w-label" style="font-size:13px">—</b></div>
+        <div class="kpi"><small>Объём за неделю</small><b class="num" id="w-usd">—</b></div>
+        <div class="kpi good"><small>Из них с premium</small><b class="num" id="w-prem">—</b></div>
+        <div class="kpi good"><small>Доля premium</small><b class="num" id="w-pct">—</b></div>
+      </div>
+      <div class="chips num" id="my-sym"></div>
+      <div class="my-wrap"><table class="my num"><thead><tr>
+          <th class="l">Время</th><th class="l">Тикер</th><th class="l">Сторона</th><th class="l">Роль</th><th>Цена</th><th>Размер</th><th>$</th><th class="l">Контрагент</th><th class="l">Его тип</th>
+        </tr></thead><tbody id="my-trades"></tbody></table></div>
+    </section>
+  </div>
+</main>
+
+<script>
+// Единственное прямое соединение страницы с биржей — WS стакана выбранного тикера.
+// Остальное (владельцы ордеров, сделки, позиции) — через локальный сервер с общим бюджетом запросов.
+const WS_URL = "wss://api.rh.lighter.xyz/stream?readonly=true";
+const OWNERS_EVERY = 2000;   // как часто обновлять владельцев ордеров (через сервер), мс
+const MY_EVERY = 4000;       // как часто спрашивать у сервера сделки аккаунта, мс
+const HEDGES_EVERY = 5000;
+const SIM_LEVELS = 60;       // сколько уровней учитывать при расчёте рыночной заявки
+const POOL_MIN = 281474976700000;
+
+const $ = id => document.getElementById(id);
+const st = {
+  markets: [], m: null, book: { asks: new Map(), bids: new Map() }, bookNonce: null, bookTs: 0,
+  orders: { asks: [], bids: [] }, ordersTs: 0, ordersMarket: null,
+  reg: {}, flows: new Map(), recent: new Map(),
+  wsBookOk: false, wsTradesOk: false, hot: { short: false, long: false }, seen: new Set(),
+  wallet: null, me: null, my: null, myLive: new Map(), myFlash: new Map(), hedges: null,
+  sim: { long: null, short: null }, favs: [],
+};
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("pb_" + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("pb_" + k, JSON.stringify(v)); } catch {} },
+};
+
+const tierOf = acc => acc === st.me ? "mine" : (st.reg[acc] || ["unknown"])[0];
+const TAG = { premium: "PREMIUM", standard: "standard", plus: "plus", unknown: "?", mine: "МОЙ" };
+const fmt = (x, d = 0) => Number(x).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+const accLabel = a => a === "?" ? "владелец не определён" : a === st.me ? `${a} · вы` : (Number(a) >= POOL_MIN ? `пул ${a}` : a);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const nn = x => x !== null && x !== undefined && !Number.isNaN(x);
+const sgn = (x, d = 3) => nn(x) ? (x > 0 ? "+" : x < 0 ? "−" : "") + fmt(Math.abs(x), d) + "%" : "—";
+const cls = x => nn(x) ? (x > 0 ? "pos" : x < 0 ? "neg" : "") : "";
+const money = x => nn(x) ? (x < 0 ? "−$" : "$") + fmt(Math.abs(x)) : "—";
+const DIRS = { rh_long: "LONG RH / SHORT Core", core_long: "LONG Core / SHORT RH" };
+
+// ---------- реестр тарифов (его ведёт сервер 24/7; страница дополняет локально до следующей загрузки) ----------
+async function loadRegistry() {
+  try {
+    const r = await (await fetch("/registry")).json();
+    for (const [a, v] of Object.entries(r)) if (!st.reg[a] || st.reg[a][1] <= v[1]) st.reg[a] = v;
+  } catch {}
+}
+function observe(t) {
+  if (st.seen.has(t.trade_id)) return;
+  st.seen.add(t.trade_id);
+  if (st.seen.size > 200000) st.seen.clear();
+  const makerAsk = t.is_maker_ask;
+  const maker = String(makerAsk ? t.ask_account_id : t.bid_account_id);
+  const taker = String(makerAsk ? t.bid_account_id : t.ask_account_id);
+  const ts = Math.floor(t.timestamp / 1000);
+  const mt = PB.tierOfFee(t.maker_fee), tt = PB.tierOfFee(t.taker_fee);
+  // тариф — только по обычным сделкам: в ликвидациях комиссию платит и standard
+  if (t.type === "trade") for (const [a, tr] of [[maker, mt], [taker, tt]]) {
+    if (!st.reg[a] || st.reg[a][1] <= ts) st.reg[a] = [tr, ts];
+  }
+  if (st.me && (maker === st.me || taker === st.me)) {
+    const lt = PB.liveTrade(t, st.me);
+    st.myLive.set(t.trade_id, lt);
+    st.myFlash.set(t.trade_id, Date.now());
+    beep(lt.cp_tier === "premium" ? 990 : 300);
+  }
+  if (t.type !== "trade") return;
+  const f = st.flows.get(t.market_id) || []; st.flows.set(t.market_id, f);
+  f.push({ ts: t.timestamp, usd: +t.usd_amount, mt, tt });
+  const r = st.recent.get(t.market_id) || []; st.recent.set(t.market_id, r);
+  r.unshift({ ts: t.timestamp, price: t.price, size: t.size, usd: +t.usd_amount, takerBuy: makerAsk, mt, tt });
+  if (r.length > 40) r.length = 40;
+}
+
+// ---------- сделки всех рынков RH: поток от сервера (одно соединение сервера с биржей) ----------
+function connectEvents() {
+  const es = new EventSource("/events");
+  es.onopen = () => { st.wsTradesOk = true; };
+  es.onmessage = e => { const msg = JSON.parse(e.data); if (msg.trades) msg.trades.forEach(observe); };
+  es.onerror = () => { st.wsTradesOk = false; };  // EventSource переподключается сам
+}
+
+// ---------- WebSocket: стакан выбранного рынка ----------
+let bookWs = null, bookSub = null;
+function connectBook() {
+  bookWs = new WebSocket(WS_URL);
+  bookWs.onopen = () => { st.wsBookOk = true; bookSub = null; subscribeBook(); };
+  bookWs.onmessage = e => {
+    const msg = JSON.parse(e.data);
+    if (!msg.order_book || msg.channel !== `order_book:${st.m.market_id}`) return;
+    const ob = msg.order_book, snap = (msg.type || "").startsWith("subscribed");
+    if (!snap && st.bookNonce !== null && ob.begin_nonce !== st.bookNonce) { resubscribeBook(); return; }
+    if (snap) { st.book.asks.clear(); st.book.bids.clear(); }
+    for (const side of ["asks", "bids"]) for (const l of ob[side] || []) {
+      const s = +l.size; if (s <= 1e-12) st.book[side].delete(l.price); else st.book[side].set(l.price, s);
+    }
+    st.bookNonce = ob.nonce; st.bookTs = Date.now();
+  };
+  bookWs.onclose = () => { st.wsBookOk = false; setTimeout(connectBook, 1500); };
+  bookWs.onerror = () => bookWs.close();
+}
+function subscribeBook() {
+  if (!bookWs || bookWs.readyState !== 1 || !st.m) return;
+  if (bookSub !== null) bookWs.send(JSON.stringify({ type: "unsubscribe", channel: `order_book/${bookSub}` }));
+  st.book.asks.clear(); st.book.bids.clear(); st.bookNonce = null; st.bookTs = 0;
+  bookSub = st.m.market_id;
+  bookWs.send(JSON.stringify({ type: "subscribe", channel: `order_book/${bookSub}` }));
+}
+function resubscribeBook() { const s = bookSub; bookSub = null; if (s !== null) bookWs.send(JSON.stringify({ type: "unsubscribe", channel: `order_book/${s}` })); subscribeBook(); }
+
+// ---------- владельцы ордеров (REST через сервер, кеш 2 с на все вкладки) ----------
+async function pollOrders() {
+  const mid = st.m && st.m.market_id;
+  if (mid !== undefined && mid !== null) {
+    try {
+      const d = await (await fetch(`/owners?market_id=${mid}`)).json();
+      if (st.m.market_id === mid && d.asks) { st.orders = d; st.ordersTs = Date.now(); st.ordersMarket = mid; }
+    } catch {}
+  }
+  setTimeout(pollOrders, OWNERS_EVERY);
+}
+
+// ---------- кошелёк и мой аккаунт (сервер) ----------
+function setWalletInfo(w) {
+  const changed = (w.wallet || null) !== st.wallet;
+  st.wallet = w.wallet || null;
+  st.me = w.account !== null && w.account !== undefined ? String(w.account) : null;
+  if (changed) { st.my = null; st.myLive.clear(); st.myFlash.clear(); st.hedges = null; renderHedges(); }
+  if (document.activeElement !== $("wallet") && st.wallet) $("wallet").value = st.wallet;
+  $("wallet-msg").className = "num who";
+  $("wallet-msg").textContent = st.me ? `аккаунт RH ${st.me}` : "";
+}
+async function submitWallet(e) {
+  e.preventDefault();
+  const wallet = $("wallet").value.trim();
+  $("wallet-btn").disabled = true; $("wallet-msg").className = "num"; $("wallet-msg").textContent = "проверяю…";
+  try {
+    const r = await fetch("/wallet", { method: "POST", body: JSON.stringify({ wallet }) });
+    const d = await r.json();
+    if (!r.ok) { $("wallet-msg").className = "num err"; $("wallet-msg").textContent = d.error || "ошибка"; }
+    else { setWalletInfo(d); pollMyOnce(); pollHedgesOnce(); }
+  } catch { $("wallet-msg").className = "num err"; $("wallet-msg").textContent = "сервер недоступен"; }
+  $("wallet-btn").disabled = false;
+}
+async function pollMyOnce() {
+  try {
+    const d = await (await fetch("/my")).json();
+    if ((d.wallet || null) !== st.wallet) setWalletInfo(d);
+    st.my = d;
+    for (const t of d.trades) if (t.cp_tier !== "unknown") st.myLive.delete(t.trade_id);
+  } catch {}
+}
+async function pollMy() { await pollMyOnce(); setTimeout(pollMy, MY_EVERY); }
+
+// ---------- отрисовка ----------
+const pd = () => st.m.supported_price_decimals, sd = () => st.m.supported_size_decimals;
+const BLANK = `<tr class="r blank"><td colspan="7">&nbsp;</td></tr>`;
+function rowHtml(r, side, i, hit) {
+  const c = ["r", side === "asks" ? "ask" : "bid", r.tier, r.q === 1 ? "lvl-start" : "repeat", hit.has(i) ? "fill" : ""].join(" ");
+  return `<tr class="${c}"><td class="q num">${r.q}</td><td class="l price num">${fmt(r.price, pd())}</td>` +
+    `<td class="num">${fmt(r.size, sd())}</td><td class="num">${fmt(r.cum, sd())}</td><td class="num">${fmt(r.usd)}</td>` +
+    `<td class="l"><span class="tag">${TAG[r.tier]}</span></td><td class="l num">${accLabel(r.acc)}</td></tr>`;
+}
+function sideSummary(rows) {
+  const t = { premium: 0, standard: 0, plus: 0, unknown: 0, mine: 0 }; let s = 0;
+  for (const r of rows) { t[r.tier] += r.usd; s += r.usd; }
+  s = s || 1;
+  return `<b style="color:var(--prem-text)">premium ${fmt(100 * t.premium / s)}%</b> ($${fmt(t.premium)}) · standard ${fmt(100 * t.standard / s)}%` +
+    (t.plus ? ` · plus ${fmt(100 * t.plus / s)}%` : "") + ` · ? ${fmt(100 * t.unknown / s)}%`;
+}
+function oppHtml(sim, usd, thr, word) {
+  const ok = sim.full && sim.share >= thr;
+  const verdict = !sim.got ? "Нет данных стакана"
+    : !sim.full ? `В стакане видно только $${fmt(sim.got)} — уменьшите объём сделки`
+    : ok ? `Можно бить ${word}: ${fmt(sim.share)}% объёма уйдёт premium-мейкерам`
+    : `Пока рано: premium только ${fmt(sim.share)}% (нужно ≥ ${thr}%)`;
+  return `
+    <div class="title"><span class="big num">${fmt(sim.share)}%</span><span style="color:var(--muted)">premium в заявке на $${fmt(usd)}</span></div>
+    <div class="meter"><i style="width:${Math.min(100, sim.share)}%"></i><u style="left:${thr}%"></u></div>
+    <div class="verdict">${verdict}</div>
+    <div class="kv">
+      <span>Исполнится, $</span><span class="num">${fmt(sim.got)}</span>
+      <span>Из них premium, $</span><span class="num">${fmt(sim.prem)}</span>
+      <span>Средняя цена / проскальзывание</span><span class="num">${sim.avg ? fmt(sim.avg, pd() + 1) : "—"} / ${fmt(sim.slip, 3)}%</span>
+      <span>Подряд premium от лучшей цены</span><span class="num">$${fmt(sim.run)}${sim.runPrice ? " до " + fmt(sim.runPrice, pd()) : ""}</span>
+    </div>`;
+}
+let beepCtx = null;
+function beep(freq) {
+  if (!$("sound").checked) return;
+  try {
+    beepCtx = beepCtx || new AudioContext();
+    const o = beepCtx.createOscillator(), g = beepCtx.createGain();
+    o.frequency.value = freq; g.gain.value = 0.08; o.connect(g); g.connect(beepCtx.destination);
+    o.start(); o.stop(beepCtx.currentTime + 0.18);
+  } catch {}
+}
+
+function renderBook(n, usd, thr) {
+  const orders = st.ordersMarket === st.m.market_id ? st.orders : { asks: [], bids: [] };
+  const asks = PB.sideRows(st.book.asks, orders.asks, "asks", SIM_LEVELS, tierOf);
+  const bids = PB.sideRows(st.book.bids, orders.bids, "bids", SIM_LEVELS, tierOf);
+  const simL = PB.simulate(asks, usd), simS = PB.simulate(bids, usd);
+  st.sim = { long: simL, short: simS, usd };
+
+  // Ровно n строк с каждой стороны; пустые строки — по внешним краям, спред всегда на месте.
+  const askShow = asks.slice(0, n), bidShow = bids.slice(0, n);
+  const askLevels = [];
+  askShow.forEach((r, i) => { if (r.q === 1 || !askLevels.length) askLevels.push([]); askLevels[askLevels.length - 1].push(rowHtml(r, "asks", i, simL.hit)); });
+  const askHtml = askLevels.reverse().flat();
+  $("asks").innerHTML = BLANK.repeat(n - askHtml.length) + askHtml.join("");
+  $("bids").innerHTML = bidShow.map((r, i) => rowHtml(r, "bids", i, simS.hit)).join("") + BLANK.repeat(n - bidShow.length);
+  $("sum-asks").innerHTML = sideSummary(askShow); $("sum-bids").innerHTML = sideSummary(bidShow);
+  if (asks.length && bids.length) {
+    const a = +asks[0].price, b = +bids[0].price, sp = a - b;
+    $("sp-val").textContent = fmt(sp, pd());
+    $("sp-pct").textContent = `(${fmt(100 * sp / b, 3)}%)`;
+    $("sp-ask").textContent = fmt(a, pd()); $("sp-bid").textContent = fmt(b, pd());
+    $("sp-mid").textContent = fmt((a + b) / 2, pd() + 1);
+  }
+  $("sp-sym").textContent = st.m.symbol;
+
+  const hotS = simS.full && simS.share >= thr, hotL = simL.full && simL.share >= thr;
+  $("short-body").innerHTML = oppHtml(simS, usd, thr, "в шорт");
+  $("long-body").innerHTML = oppHtml(simL, usd, thr, "в лонг");
+  $("card-short").classList.toggle("hot", hotS); $("bids-side").classList.toggle("hot", hotS);
+  $("card-long").classList.toggle("hot", hotL); $("asks-side").classList.toggle("hot", hotL);
+  $("ban-short").textContent = `${fmt(simS.share)}% premium на $${fmt(usd)}`;
+  $("ban-long").textContent = `${fmt(simL.share)}% premium на $${fmt(usd)}`;
+  $("short-badge").textContent = hotS ? "СИГНАЛ" : ""; $("long-badge").textContent = hotL ? "СИГНАЛ" : "";
+  if (hotS && !st.hot.short) beep(520); if (hotL && !st.hot.long) beep(780);
+  st.hot = { short: hotS, long: hotL };
+}
+
+function renderFlow(now) {
+  const win = +$("win").value * 60000;
+  const f = (st.flows.get(st.m.market_id) || []);
+  while (f.length && f[0].ts < now - 3600000) f.shift();
+  const w = f.filter(x => x.ts >= now - win);
+  const vol = w.reduce((s, x) => s + x.usd, 0), V = vol || 1;
+  const sum = pred => w.filter(pred).reduce((s, x) => s + x.usd, 0);
+  const pm = sum(x => x.mt === "premium"), pt = sum(x => x.tt === "premium"), pa = sum(x => x.mt === "premium" || x.tt === "premium");
+  $("flow").innerHTML = `
+    <div class="fstat"><span>Premium-мейкер</span><b class="num">${fmt(100 * pm / V)}%</b>
+      <small>Доля объёма, где premium стоял в стакане и его исполнили. Ваш шанс, когда бьёте маркетом.</small></div>
+    <div class="fstat"><span>Premium-тейкер</span><b class="num">${fmt(100 * pt / V)}%</b>
+      <small>Доля объёма, где premium сам бил по стакану. Шанс, что он исполнит вашу лимитку.</small></div>
+    <div class="fstat"><span>Хоть одна сторона premium</span><b class="num">${fmt(100 * pa / V)}%</b>
+      <small>Объём за окно: $${fmt(vol)} · сделок: ${w.length}</small></div>`;
+  const rec = st.recent.get(st.m.market_id) || [];
+  $("trades").innerHTML = rec.slice(0, 30).map(t => `<tr>
+    <td class="l num" style="color:var(--muted)">${new Date(t.ts).toLocaleTimeString("ru-RU")}</td>
+    <td class="num ${t.takerBuy ? "buy" : "sell"}">${fmt(t.price, pd())}</td><td class="num">${fmt(t.size, sd())}</td>
+    <td class="num">$${fmt(t.usd)}</td><td><span class="pill ${t.mt}">${TAG[t.mt]}</span> / <span class="pill ${t.tt}">${TAG[t.tt]}</span></td></tr>`).join("")
+    || `<tr><td class="empty">Сделок пока не было</td></tr>`;
+}
+
+function renderAccount(now) {
+  const d = st.my;
+  if (!st.wallet) {
+    $("acct-id").textContent = ""; $("acct-status").textContent = "укажите кошелёк в шапке";
+    for (const id of ["w-usd", "w-prem", "w-pct"]) $(id).textContent = "—";
+    $("lp-week").textContent = ""; $("my-sym").innerHTML = ""; $("last-order").className = "last-order";
+    $("lo-verdict").textContent = "Кошелёк не задан"; $("lo-main").textContent = "";
+    $("lo-meta").textContent = "Введите адрес кошелька в шапке — здесь появится результат вашей последней заявки";
+    $("my-trades").innerHTML = `<tr><td class="l muted" colspan="9">Кошелёк не задан</td></tr>`;
+    return;
+  }
+  if (!d) { $("acct-status").textContent = "загрузка…"; return; }
+  $("acct-id").textContent = d.account;
+  $("acct-status").textContent = d.error ? `ошибка: ${d.error}`
+    : !d.last_poll ? "загружаю сделки…"
+    : d.pending ? `уточняю комиссии контрагентов: ${d.pending} сделок в очереди` : "история актуальна";
+
+  const all = PB.mergeTrades(d.trades, st.myLive);
+  const w = PB.weekTotals(d.week, d.trades, st.myLive);
+  $("w-label").textContent = d.week.label;
+  $("w-usd").textContent = `$${fmt(w.usd)}`;
+  $("w-prem").textContent = `$${fmt(w.prem)}`;
+  $("w-pct").textContent = nn(w.pct) ? `${fmt(w.pct, 1)}%` : "—";
+  $("lp-week").textContent = w.usd ? `неделя: ${fmt(w.pct, 1)}% premium · $${fmt(w.prem)} из $${fmt(w.usd)}` : "";
+
+  const lo = PB.lastOrder(all);
+  if (lo) {
+    const f0 = lo.first;
+    $("last-order").className = "last-order " + ({ all: "good", part: "part" }[lo.verdict] || "");
+    $("lo-verdict").textContent = { check: "ПРОВЕРЯЮ…", all: "✔ ВСЯ ПО PREMIUM", part: `ЧАСТИЧНО ${fmt(lo.pct)}% PREMIUM`, none: "✖ НЕ PREMIUM" }[lo.verdict];
+    $("lo-main").innerHTML = `${esc(f0.symbol)} · <span class="${f0.side}">${f0.side === "sell" ? "продажа (шорт)" : "покупка (лонг)"}</span> · ` +
+      `${f0.my_role === "taker" ? "маркет (тейкер)" : "лимитка (мейкер)"} · $${fmt(lo.usd)} · исполнений: ${lo.fills.length}`;
+    $("lo-meta").textContent = `Последняя заявка, ${new Date(f0.ts).toLocaleString("ru-RU")} · premium $${fmt(lo.prem)} из $${fmt(lo.usd)}`;
+  } else {
+    $("last-order").className = "last-order"; $("lo-verdict").textContent = "Сделок пока нет"; $("lo-main").textContent = "";
+    $("lo-meta").textContent = "Последняя заявка: как только она исполнится, здесь появится результат";
+  }
+
+  $("my-trades").innerHTML = all.slice(0, 80).map(t => {
+    const fl = st.myFlash.get(t.trade_id), isNew = fl && now - fl < 2500;
+    return `<tr class="${t.cp_tier}${isNew ? " new" : ""}">
+      <td class="l">${new Date(t.ts).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })}</td>
+      <td class="l">${esc(t.symbol)}</td><td class="l ${t.side}">${t.side === "sell" ? "шорт" : "лонг"}</td>
+      <td class="l">${t.my_role === "taker" ? "маркет" : "лимитка"}</td><td>${t.price}</td><td>${t.size}</td><td>${fmt(t.usd)}</td>
+      <td class="l">${accLabel(String(t.counterparty))}</td><td class="l"><span class="pill ${t.cp_tier}">${TAG[t.cp_tier]}</span></td></tr>`;
+  }).join("") || `<tr><td class="l muted" colspan="9">Сделок за эту неделю пока нет</td></tr>`;
+
+  $("my-sym").innerHTML = `<span class="muted">По тикерам за неделю:</span>` + (d.by_symbol.map(s =>
+    `<span class="chip ${s.premium_pct_usd >= 50 ? "good" : ""}">${esc(s.symbol)} · $${fmt(s.usd)} · ${fmt(s.premium_pct_usd, 1)}% premium</span>`).join("")
+    || `<span class="muted">сделок нет</span>`);
+}
+
+function render() {
+  if (!st.m) return;
+  const now = Date.now();
+  const n = +$("rows").value, usd = Math.max(1, +$("size").value || 0), thr = Math.min(100, Math.max(1, +$("thr").value || 80));
+  renderBook(n, usd, thr);
+  renderFlow(now);
+  renderAccount(now);
+  // одна точка связи: зелёная — всё работает; подробности — в подсказке при наведении
+  const age = st.ordersTs ? (now - st.ordersTs) / 1000 : Infinity;
+  const hs = st.hedges && st.hedges.status;
+  const checks = [["стакан", st.wsBookOk && now - st.bookTs < 15000], ["сделки", st.wsTradesOk],
+    [`владельцы ордеров (${isFinite(age) ? age.toFixed(0) + " с" : "—"})`, age < 15]];
+  if (st.wallet) checks.push(["позиции по кошельку", !!(hs && !hs.positions_err && nn(hs.positions_age) && hs.positions_age < 60)]);
+  const bad = checks.filter(x => !x[1]);
+  $("d-all").className = "dot " + (!bad.length ? "ok" : bad.length < checks.length ? "warn" : "");
+  $("d-all").parentElement.title = checks.map(([c, ok]) => `${ok ? "✔" : "✖"} ${c}`).join("\n") +
+    `\nреестр тарифов: ${fmt(Object.keys(st.reg).length)} аккаунтов`;
+}
+
+// ---------- хеджи и счета ----------
+async function pollHedgesOnce() {
+  try {
+    const d = await (await fetch("/hedges")).json();
+    if ((d.wallet || null) === st.wallet) { st.hedges = d; renderHedges(); }
+  } catch {}
+}
+async function pollHedges() { await pollHedgesOnce(); setTimeout(pollHedges, HEDGES_EVERY); }
+function renderHedges() {
+  const d = st.hedges;
+  if (!st.wallet || !d) {
+    $("h-status").textContent = st.wallet ? "загрузка…" : "";
+    $("hedges").innerHTML = `<tbody><tr><td class="l muted">${st.wallet ? "Загружаю позиции…" : "Укажите кошелёк в шапке — позиции Robinhood и Core подтянутся сами"}</td></tr></tbody>`;
+    $("accts").innerHTML = "";
+    $("acct-strip").innerHTML = `<div class="note">${st.wallet ? "Загружаю счета Robinhood и Core…"
+      : "Введите адрес кошелька в шапке: появятся счета Robinhood и Core, хеджи и статистика вашего аккаунта за неделю."}</div>`;
+    return;
+  }
+  const age = d.status.positions_age;
+  $("h-status").innerHTML = d.status.positions_err ? `<span class="warn">ошибка: ${esc(d.status.positions_err)}</span>` : nn(age) ? `обновлено ${age} с назад` : "загрузка…";
+  const rows = d.hedges.map(h => {
+    const r = h.rh, c = h.core, fmtQ = p => p ? `<span class="${p.size > 0 ? "buy" : "sell"}">${p.size > 0 ? "LONG" : "SHORT"} ${fmt(Math.abs(p.size), 2)}</span> @ ${p.entry}` : `<span class="muted">—</span>`;
+    const carryDay = nn(h.carry_next_pct_h) && h.notional ? h.carry_next_pct_h / 100 * h.notional * 24 : null;
+    const warn = !h.dir ? `<span class="warn">${!h.paired ? "тикер не на обеих площадках" : r && c ? "обе ноги в одну сторону" : "нет второй ноги"}</span>`
+      : Math.abs(h.imbalance) > 1e-9 ? `<span class="warn">разница ног ${fmt(h.imbalance, 3)}</span>` : DIRS[h.dir];
+    return `<tr class="click ${st.m && h.symbol === st.m.symbol ? "sel" : ""}" data-sym="${esc(h.symbol)}">
+      <td class="l"><b>${esc(h.symbol)}</b></td><td class="l">${warn}</td><td class="l">${fmtQ(r)}</td><td class="l">${fmtQ(c)}</td>
+      <td>${sgn(h.entry_pct)}</td><td>${sgn(h.exit_pct)}</td><td class="${cls(h.profit_pct)}"><b>${sgn(h.profit_pct)}</b></td>
+      <td class="${cls(h.close_pnl)}">${money(h.close_pnl)}</td><td class="${cls(h.upnl)}">${money(h.upnl)}</td>
+      <td class="${cls(h.funding_net)}">${money(h.funding_net)}</td><td class="${cls(carryDay)}">${nn(carryDay) ? money(carryDay) : "—"}</td></tr>`;
+  });
+  $("hedges").innerHTML = `<thead><tr><th class="l">Тикер</th><th class="l">Стратегия</th><th class="l">RH</th><th class="l">Core</th>
+    <th title="спред при открытии по средним ценам позиций">Вход</th><th title="спред закрытия всей позиции по стакану сейчас">Выход сейчас</th>
+    <th>Заработок по спреду</th><th title="если закрыть обе ноги маркетом сейчас">Закрыть сейчас</th><th title="по марк-цене, данные биржи">uPnL биржи</th>
+    <th title="+ получено, − уплачено">Фандинг итого</th><th title="по текущему прогнозу ставок">Фандинг в день</th></tr></thead><tbody>` +
+    (rows.join("") || `<tr><td class="l muted" colspan="11">Открытых позиций нет</td></tr>`) + "</tbody>";
+  renderAccounts(d);
+  $("accts").innerHTML = `<span class="muted">Счета:</span>` + (["rh", "core"].map(v => (d.accounts[v] || []).map(a =>
+    `<span class="chip">${v === "rh" ? "Robinhood Chain" : "Lighter Core"} ${a.index} · всего ${money(a.total)} · свободно ${money(a.available)}</span>`).join("")).join("")
+    || `<span class="muted">не найдены</span>`);
+}
+
+// ---------- карточки счетов (над стаканом) ----------
+function renderAccounts(d) {
+  const names = { rh: "Robinhood", core: "Core" }, card = [], tot = { total: 0, pos: {} };
+  for (const v of ["rh", "core"]) {
+    const accs = d.accounts[v] || [];
+    const total = accs.reduce((s, a) => s + (a.total || 0), 0), im = accs.reduce((s, a) => s + (a.im || 0), 0);
+    const pos = d.hedges.map(h => h[v]).filter(Boolean);
+    const gross = pos.reduce((s, p) => s + Math.abs(p.value || 0), 0), net = pos.reduce((s, p) => s + Math.sign(p.size) * (p.value || 0), 0);
+    let liq = null;  // ближайшая ликвидация: % движения цены до неё
+    for (const p of pos) if (nn(p.liq) && p.liq > 0 && p.mark) {
+      const dist = (p.liq - p.mark) / p.mark * 100;
+      if (liq === null || Math.abs(dist) < Math.abs(liq.dist)) liq = { dist, sym: p.size > 0 ? "падение" : "рост" };
+    }
+    const used = total ? 100 * im / total : 0;
+    tot.total += total; tot.pos[v] = gross;
+    card.push(`<div class="acc"><small>${names[v]} · аккаунт ${accs.map(a => a.index).join(", ") || "нет"}</small>
+      <div class="top"><b class="num">${money(total)}</b><span class="pv num ${net > 0 ? "pos" : net < 0 ? "neg" : ""}">${gross ? money(gross) : ""}</span></div>
+      <div class="line num">Позиции ${money(gross)} · плечо ${total ? fmt(gross / total, 1) : "—"}×` +
+        `${liq ? ` · до ликвидации ~${fmt(Math.abs(liq.dist), 1)}% (${liq.sym} рынка)` : ""}</div>
+      <div class="line num">Маржа занята ${fmt(used)}% · свободно ${money(accs.reduce((s, a) => s + (a.available || 0), 0))}</div>
+      <div class="bar"><i class="${used > 60 ? "high" : used > 35 ? "mid" : ""}" style="width:${Math.min(100, used)}%"></i></div></div>`);
+  }
+  const pairs = d.hedges.filter(h => h.dir);
+  const upnl = pairs.reduce((s, h) => s + (h.upnl || 0), 0);
+  const close = pairs.every(h => nn(h.close_pnl)) ? pairs.reduce((s, h) => s + h.close_pnl, 0) : null;
+  const fund = pairs.reduce((s, h) => s + (h.funding_net || 0), 0);
+  card.push(`<div class="acc"><small>Всего на обоих</small>
+    <div class="top"><b class="num">${money(tot.total)}</b></div>
+    <div class="line num">Позиции: RH ${money(tot.pos.rh)} · Core ${money(tot.pos.core)}</div>
+    <div class="line num">Связки вместе: <b class="${cls(upnl)}">${money(upnl)}</b> · итог закр.: <b class="${cls(close)}">${money(close)}</b>` +
+      ` · фандинг: <b class="${cls(fund)}">${money(fund)}</b></div>
+    <div class="line">«Связки вместе» — по марк-цене биржи; «итог закр.» — если закрыть обе ноги маркетом по стакану сейчас. Маржа считается отдельно на каждом счёте.</div></div>`);
+  $("acct-strip").innerHTML = card.join("");
+}
+
+// ---------- избранное (хранится в браузере) ----------
+const isFav = s => st.favs.includes(s);
+function toggleFav(sym) {
+  st.favs = isFav(sym) ? st.favs.filter(s => s !== sym) : [...st.favs, sym];
+  store.set("favs", st.favs);
+  renderFavs(); buildMarketSelect();
+}
+function renderFavs() {
+  const on = st.m && isFav(st.m.symbol);
+  $("fav-btn").classList.toggle("on", !!on); $("fav-btn").textContent = on ? "★" : "☆";
+  $("favs").innerHTML = st.favs.length
+    ? st.favs.map(s => `<button data-sym="${esc(s)}" class="${st.m && st.m.symbol === s ? "on" : ""}">${esc(s)}</button>`).join("")
+    : `<span class="hint">☆ рядом с тикером — добавить в избранное</span>`;
+}
+function buildMarketSelect() {
+  const opt = m => `<option value="${m.market_id}">${esc(m.symbol)}${m.kind === "pre-IPO" ? " · pre-IPO" : ""}</option>`;
+  const fav = st.markets.filter(m => isFav(m.symbol)), rest = st.markets.filter(m => !isFav(m.symbol));
+  $("market").innerHTML = (fav.length ? `<optgroup label="★ Избранное">${fav.map(opt).join("")}</optgroup>` : "") +
+    `<optgroup label="Все тикеры">${rest.map(opt).join("")}</optgroup>`;
+  if (st.m) $("market").value = st.m.market_id;
+}
+
+// ---------- запуск ----------
+function selectMarket(id) {
+  st.m = st.markets.find(m => m.market_id === id) || st.markets[0];
+  $("market").value = st.m.market_id;
+  store.set("market", st.m.symbol);
+  $("book-title").textContent = `Стакан ${st.m.symbol}`;
+  document.querySelectorAll("th.sz").forEach(th => th.textContent = `Размер ${st.m.symbol}`);
+  document.querySelectorAll("th.tot").forEach(th => th.textContent = `Всего ${st.m.symbol}`);
+  st.orders = { asks: [], bids: [] }; st.ordersMarket = null; st.ordersTs = 0;
+  subscribeBook();
+  fetch(`/recent?market_id=${st.m.market_id}`).then(r => r.json())
+    .then(d => { (d.trades || []).slice().reverse().forEach(observe); for (const a of st.flows.values()) a.sort((x, y) => x.ts - y.ts); for (const a of st.recent.values()) a.sort((x, y) => y.ts - x.ts); })
+    .catch(() => {});
+  renderHedges(); renderFavs();
+}
+function selectSymbol(sym) {
+  const m = st.markets.find(x => x.symbol === sym);
+  if (m) selectMarket(m.market_id);
+}
+
+async function init() {
+  const qp = new URLSearchParams(location.search);
+  for (const [id, key] of [["rows", "rows"], ["size", "size"], ["thr", "thr"], ["win", "win"]]) {
+    const v = qp.get(key) ?? store.get(key, null); if (v !== null) $(id).value = v;
+    $(id).addEventListener("change", () => store.set(key, $(id).value));
+  }
+  $("sound").checked = store.get("sound", false);
+  $("sound").addEventListener("change", () => { store.set("sound", $("sound").checked); if ($("sound").checked) beep(660); });
+  st.favs = store.get("favs", []);
+
+  try { setWalletInfo(await (await fetch("/wallet")).json()); } catch {}
+  $("wallet-form").addEventListener("submit", submitWallet);
+  renderHedges();
+  await loadRegistry();
+  pollMy();
+  // только RWA и pre-IPO, которые есть и на RH, и на Core (крипту и одиночные сервер отсекает)
+  for (let i = 0; i < 20 && !st.markets.length; i++) {
+    try { st.markets = await (await fetch("/markets")).json(); } catch {}
+    if (!st.markets.length) await new Promise(r => setTimeout(r, 1500));
+  }
+  if (!st.markets.length) throw new Error("сервер ещё не загрузил список рынков — обновите страницу");
+  st.favs = st.favs.filter(s => st.markets.some(m => m.symbol === s));
+  buildMarketSelect();
+  const saved = (qp.get("market") || store.get("market", "COIN")).toUpperCase();
+  const first = st.markets.find(m => m.symbol === saved) || st.markets[0];
+  $("market").addEventListener("change", e => selectMarket(+e.target.value));
+  $("hedges").addEventListener("click", e => { const tr = e.target.closest("tr[data-sym]"); if (tr) selectSymbol(tr.dataset.sym); });
+  $("fav-btn").addEventListener("click", () => toggleFav(st.m.symbol));
+  $("favs").addEventListener("click", e => { const s = e.target.dataset.sym; if (s) selectSymbol(s); });
+
+  connectBook(); connectEvents();
+  selectMarket(first.market_id);
+  pollOrders(); pollHedges();
+  setInterval(loadRegistry, 60000);
+  setInterval(render, 300);
+}
+init().catch(e => { document.body.insertAdjacentHTML("afterbegin", `<div style="padding:12px;background:#5a1d22">Ошибка запуска: ${esc(e)}</div>`); });
+</script>
+</body>
+</html>
